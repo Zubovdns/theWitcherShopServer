@@ -4,15 +4,20 @@ const ApiError = require('../error/ApiError');
 class BasketController {
 	async addProduct(req, res, next) {
 		let { productId, quantity } = req.query;
+		console.log(productId);
+		console.log(quantity);
+		if (!productId || !quantity) {
+			return next(ApiError.internal('Ошибка параметров.'));
+		}
 		quantity = quantity || 0;
+		const product = await Product.findOne({ where: { id: productId } });
+		if (!product) {
+			return next(ApiError.internal('Продукт не найден.'));
+		}
 		if (quantity <= 0) {
 			return next(
 				ApiError.internal('Количество продуктов не может быть меньше нуля.')
 			);
-		}
-		const product = await Product.findOne({ where: { id: productId } });
-		if (!product) {
-			return next(ApiError.internal('Продукт не найден.'));
 		}
 		const basket = await Basket.findOne({ where: { userId: req.user.id } });
 		if (!basket) {
@@ -40,9 +45,10 @@ class BasketController {
 		return res.json('Товар доставлен в корзину.');
 	}
 	async getProducts(req, res, next) {
-		let { limit, page } = req.query;
+		let { limit, page, discount } = req.query;
 		page = page || 1;
 		limit = limit || 10;
+		discount = discount || 0;
 		let offset = page * limit - limit;
 		const basket = await Basket.findOne({ where: { userId: req.user.id } });
 		let basket_product = await BasketProduct.findAndCountAll({
@@ -50,10 +56,26 @@ class BasketController {
 			limit,
 			offset,
 		});
-		res.json(basket_product);
+		let products = [];
+		let cost = { firstCost: 0, discount: 0, totalCost: 0 };
+
+		for (const basketProduct of basket_product.rows) {
+			const product = await Product.findOne({
+				where: { id: basketProduct.productId },
+			});
+
+			products.push({ product, quantity: basketProduct.quantity });
+			cost.firstCost += product.price * basketProduct.quantity;
+		}
+		cost.firstCost = cost.firstCost.toFixed(2);
+		cost.discount = cost.firstCost * discount;
+		cost.discount = cost.discount.toFixed(2);
+		cost.totalCost = cost.firstCost - cost.discount;
+		cost.totalCost = cost.totalCost.toFixed(2);
+		res.json({ rows: products, cost });
 	}
 	async deleteProduct(req, res, next) {
-		const { productId } = req.params;
+		const { productId } = req.query;
 		const basket = await Basket.findOne({ where: { userId: req.user.id } });
 		const basket_product = await BasketProduct.findOne({
 			where: { productId, basketId: basket.id },
