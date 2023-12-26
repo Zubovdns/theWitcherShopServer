@@ -72,7 +72,7 @@ class BasketController {
 		cost.discount = cost.discount.toFixed(2);
 		cost.totalCost = cost.firstCost - cost.discount;
 		cost.totalCost = cost.totalCost.toFixed(2);
-		res.json({ rows: products, cost });
+		res.json({ rows: products, cost, amount: basket_product.count });
 	}
 	async deleteProduct(req, res, next) {
 		const { productId } = req.query;

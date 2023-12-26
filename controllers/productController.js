@@ -1,6 +1,6 @@
 const uuid = require('uuid');
 const path = require('path');
-const { Product, ProductInfo } = require('../models/models');
+const { Product, ProductInfo, Category } = require('../models/models');
 const ApiError = require('../error/ApiError');
 
 class ProductController {
@@ -74,6 +74,15 @@ class ProductController {
 		fs.unlinkSync(imagePath);
 
 		return res.json({ message: 'Товар успешно удален.' });
+	}
+	async getTopOnCategory(req, res, next) {
+		const topProduct1 = await Product.findOne({ where: { categoryId: 1 } });
+		const topProduct2 = await Product.findOne({ where: { categoryId: 2 } });
+		const topProduct3 = await Product.findOne({ where: { categoryId: 3 } });
+
+		let topProducts = [];
+		topProducts = topProducts.concat(topProduct1, topProduct2, topProduct3);
+		return res.json(topProducts);
 	}
 }
 
