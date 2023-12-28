@@ -6,7 +6,8 @@ const ApiError = require('../error/ApiError');
 class ProductController {
 	async create(req, res, next) {
 		try {
-			let { id, name, price, categoryId, description, info } = req.body;
+			let { id, name, price, categoryId, description, info, inStock } =
+				req.body;
 			const { img } = req.files;
 			let fileName = uuid.v4() + '.jpg';
 			img.mv(path.resolve(__dirname, '..', 'static', fileName));
@@ -18,6 +19,7 @@ class ProductController {
 				categoryId,
 				description,
 				img: fileName,
+				inStock,
 			});
 
 			if (info) {
@@ -36,21 +38,42 @@ class ProductController {
 			next(ApiError.badRequest(e.message));
 		}
 	}
+
 	async getAll(req, res) {
-		let { categoryId, limit, page } = req.query;
+		let { categoryId, limit, page, inStock } = req.query;
 		page = page || 1;
 		limit = limit || 9;
+
+		//код особенного человека
+
+		if (inStock === 'true') inStock = true;
+		else inStock = false;
+
+		console.log(inStock);
 		let offset = page * limit - limit;
 		let products;
-		if (!categoryId) {
+		if (!categoryId && !inStock) {
 			products = await Product.findAndCountAll({ limit, offset });
-		} else {
+		} else if (categoryId && !inStock) {
 			products = await Product.findAndCountAll({
 				where: { categoryId },
 				limit,
 				offset,
 			});
+		} else if (!categoryId && inStock) {
+			products = await Product.findAndCountAll({
+				where: { inStock },
+				limit,
+				offset,
+			});
+		} else if (categoryId && inStock) {
+			products = await Product.findAndCountAll({
+				where: { categoryId, inStock },
+				limit,
+				offset,
+			});
 		}
+
 		res.json(products);
 	}
 	async getOne(req, res) {

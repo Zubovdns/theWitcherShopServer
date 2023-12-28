@@ -4,8 +4,6 @@ const ApiError = require('../error/ApiError');
 class BasketController {
 	async addProduct(req, res, next) {
 		let { productId, quantity } = req.query;
-		console.log(productId);
-		console.log(quantity);
 		if (!productId || !quantity) {
 			return next(ApiError.internal('Ошибка параметров.'));
 		}

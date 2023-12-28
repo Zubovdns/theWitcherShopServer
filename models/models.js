@@ -23,6 +23,7 @@ const Product = sequelize.define('product', {
 	price: { type: DataTypes.FLOAT, allowNull: false },
 	img: { type: DataTypes.STRING, allowNull: false },
 	description: { type: DataTypes.TEXT, allowNull: false },
+	inStock: { type: DataTypes.BOOLEAN, allowNull: false },
 });
 
 const Category = sequelize.define('category', {
